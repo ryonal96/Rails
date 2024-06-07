@@ -165,3 +165,228 @@
 +Rack
     Rack là cầu nối giữa websever (puma) và ứng dụng rails
     Middleware là 1 phần của Rack: có các nhiệm vụ như logging, caching, xác thực trước khi vào Rails .
+ROUTING
+    -Các routes được định nghĩa trong tập tin config/routes.rb
+    -Hai mục đích của Routing:
+        +Mapping yêu cầu đến các phương thức action của controller
+        +Tạo URL động: tạo các URL động để sử dụng trong các phương thức như 'link_to' và 'redirect_to'
+        
+    
+# root to: "static_pages#index"
+    Định nghĩa route gốc của ứng dụng. Khi người dùng truy cập vào URL gốc ("/"), action index của controller static_pages sẽ được gọi.
+
+# get "/signup", to: "users#new"
+    Định nghĩa route để hiển thị form đăng ký người dùng. Khi người dùng truy cập vào URL "/signup", action new của controller users sẽ được gọi.
+
+# get "/login", to: "sessions#new"
+    Hiển thị form đăng nhập. Khi người dùng truy cập vào URL "/login" bằng phương thức GET, action new của controller sessions sẽ được gọi.
+
+# post "/login", to: "sessions#create"
+    Xử lý dữ liệu đăng nhập khi người dùng gửi form. Khi người dùng gửi form đăng nhập (bằng phương thức POST), action create của controller sessions sẽ được gọi.
+
+# delete "/logout", to: "sessions#destroy"
+    Định nghĩa route để đăng xuất người dùng. Khi người dùng gửi yêu cầu DELETE tới URL "/logout", action destroy của controller sessions sẽ được gọi để thực hiện quá trình đăng xuất
+
+# resources :shared_urls, only: %i(new create)
+    Định nghĩa các routes RESTful cho tài nguyên shared_urls, nhưng chỉ tạo các routes cho các action new và create.
+        new: Hiển thị form tạo mới shared_url.
+        create: Xử lý việc tạo mới shared_url.
+
+# resources :users, only: %i(create new show)
+    Định nghĩa các routes RESTful cho tài nguyên users, nhưng chỉ tạo các routes cho các action create, new và show.
+        new: Hiển thị form đăng ký người dùng mới.
+        create: Xử lý việc tạo mới người dùng.
+        show: Hiển thị thông tin người dùng cụ thể
+
+    Segment Keys
+        Segment keys là các tham số được chèn vào trong chuỗi mẫu URL, được đánh dấu bằng dấu hai chấm (:)
+        Segment keys là một phần quan trọng trong hệ thống routing của Rails, giúp linh hoạt trong việc định nghĩa và tạo các URL động. Hiểu rõ cách sử dụng segment keys và các phương thức liên quan sẽ giúp bạn tận dụng tối đa sức mạnh của hệ thống routing
+
+        #get "products/:id" => "products#show", constraints: { :id => /\d+/ }
+            Đoạn mã trên có nghĩa là:
+                Định nghĩa một route get "products/:id".
+                Route này sẽ chỉ khớp (match) nếu :id trong URL là một chuỗi số.
+                Nếu :id không phải là một chuỗi số, route này sẽ không khớp và Rails sẽ tiếp tục tìm kiếm các route khác.
+                Ví dụ URL khớp với route trên:
+                /products/123 - khớp vì 123 là chuỗi số.
+                /products/456 - khớp vì 456 là chuỗi số.
+                Ví dụ URL không khớp với route trên:
+                /products/abc - không khớp vì abc không phải là chuỗi số.
+                /products/123abc - không khớp vì 123abc không phải là chuỗi số thuần túy.
+            
+            # config/routes.rb
+            Rails.application.routes.draw do
+                get "products/:id" => "products#show", constraints: { :id => /\d+/ }
+            end
+
+            # app/controllers/products_controller.rb
+            class ProductsController < ApplicationController
+                def show
+                    @product = Product.find(params[:id])
+                    # Do something with @product
+                end
+            end
+
+"constraints" là một cơ chế mạnh mẽ dùng để kiểm soát các điều kiện khi định tuyến các yêu cầu HTTP. Constraints có thể được sử dụng để giới hạn các tuyến đường (routes) dựa trên một số điều kiện cụ thể
+        -Constraints cơ bản
+            Constraints cơ bản được định nghĩa ngay trong tệp config/routes.rb để giới hạn các tuyến đường dựa trên các điều kiện như định dạng của URL, giá trị của tham số, hay giá trị của subdomain.
+
+            Ví dụ:
+            Rails.application.routes.draw do
+            # Giới hạn tuyến đường chỉ cho subdomain 'admin'
+            constraints subdomain: 'admin' do
+                get 'dashboard', to: 'admin#dashboard'
+            end
+
+            # Giới hạn tuyến đường chỉ cho định dạng JSON
+            constraints format: 'json' do
+                get 'profile', to: 'users#profile'
+            end
+            end
+        -Constraints nâng cao với Custom Constraints
+            Có thể định nghĩa các constraints tùy chỉnh (custom constraints) bằng cách tạo ra các lớp hoặc mô-đun riêng. Các lớp hoặc mô-đun này phải có phương thức matches? trả về giá trị boolean.
+
+            Ví dụ về Custom Constraint:
+            Giả sử chúng ta muốn giới hạn truy cập vào một tuyến đường dựa trên địa chỉ IP của người dùng.
+
+            class IpConstraint
+            def initialize(allowed_ip)
+                @allowed_ip = allowed_ip
+            end
+
+            def matches?(request)
+                request.remote_ip == @allowed_ip
+            end
+            end
+
+            Rails.application.routes.draw do
+            constraints IpConstraint.new('192.168.1.1') do
+                get 'admin', to: 'admin#dashboard'
+            end
+            end
+            Trong ví dụ trên, chỉ những yêu cầu đến từ địa chỉ IP 192.168.1.1 mới có thể truy cập vào tuyến đường /admin.
+
+        -Constraints với Regex
+            Có thể sử dụng biểu thức chính quy (regex) để giới hạn các giá trị của tham số trong tuyến đường.
+
+            Ví dụ về Regex Constraint:
+            Rails.application.routes.draw do
+            get 'products/:id', to: 'products#show', constraints: { id: /\d+/ }
+            end
+            Trong ví dụ này, chỉ những giá trị số (chỉ chứa các ký tự số) mới hợp lệ cho tham số :id.
+
+        -Constraints với Lambda
+            Lambda có thể được sử dụng như một cách ngắn gọn để định nghĩa constraints mà không cần tạo lớp hoặc mô-đun riêng.
+
+            Ví dụ về Lambda Constraint:
+            Rails.application.routes.draw do
+            get 'admin', to: 'admin#dashboard', constraints: lambda { |req| req.remote_ip == '192.168.1.1' }
+            end
+        -Constraints kết hợp
+            Có thể kết hợp nhiều constraints cùng lúc cho một tuyến đường để đạt được các điều kiện phức tạp hơn.
+
+        Ví dụ về Constraints kết hợp:
+            Rails.application.routes.draw do
+            constraints(subdomain: 'admin', format: 'json') do
+                get 'dashboard', to: 'admin#dashboard'
+            end
+            end
+==========
+class DateFormatConstraint 
+    def self.matches?(request)
+        request.params[:date] =~ /\A\d{4}-\d\d-\d\d\z/ # YYYY-MM-DD 
+    end
+end
+# in routes.rb
+constraints(DateFormatConstraint) do 
+    get 'since/:date' => :since
+end
+
++phân tích code
+
+    class DateFormatConstraint
+        Đây là định nghĩa của một lớp Ruby có tên DateFormatConstraint.
+        Lớp này được thiết kế để kiểm tra xem một yêu cầu (request) có chứa tham số ngày (:date) hợp lệ hay không
+    def self.matches?(request)
+        self.matches? là một phương thức tĩnh (class method), nghĩa là bạn có thể gọi nó trên lớp mà không cần phải khởi tạo một đối tượng của lớp đó.
+        Phương thức này nhận vào một đối tượng request làm tham số. Đây thường là một đối tượng đại diện cho yêu cầu HTTP trong Rails.  
+
+    request.params[:date]
+        request.params là một hash chứa các tham số từ yêu cầu HTTP.
+        request.params[:date] lấy giá trị của tham số :date từ yêu cầu
+
+    =~ /\A\d{4}-\d\d-\d\d\z/ # YYYY-MM-DD
+        =~ là toán tử khớp biểu thức chính quy trong Ruby.
+        \A khớp với bắt đầu của chuỗi.
+        \d{4} khớp với chính xác bốn chữ số, đại diện cho năm.
+        - khớp với dấu gạch ngang.
+        \d\d khớp với hai chữ số, đại diện cho tháng hoặc ngày.
+        \z khớp với kết thúc của chuỗi.
+        Toàn bộ biểu thức chính quy \A\d{4}-\d\d-\d\d\z đảm bảo rằng chuỗi phải khớp chính xác với định dạng YYYY-MM-DD, không nhiều hơn và không ít hơn.
+    
+    request.params[:date] =~ /\A\d{4}-\d\d-\d\d\z/
+        Biểu thức chính quy này sẽ trả về true nếu chuỗi khớp với định dạng ngày, và nil nếu không khớp.
+        Phương thức matches? sẽ trả về true hoặc false dựa trên kết quả của phép so sánh biểu thức chính quy.
+Mục đích:
+    Lớp DateFormatConstraint và phương thức matches? được thiết kế để sử dụng trong định tuyến của Rails.
+    Nó kiểm tra xem tham số :date trong một yêu cầu có hợp lệ theo định dạng YYYY-MM-DD hay không.
+    Nếu tham số :date hợp lệ, các tuyến đường được định nghĩa trong khối constraints sẽ được khớp, nếu không, tuyến đường sẽ không khớp và Rails sẽ trả về trạng thái 404.
+
+# in routes.rb
+constraints(DateFormatConstraint) do
+  get 'since/:date' => :since
+end
+    Khi một yêu cầu đến với đường dẫn since/:date, phương thức matches? của DateFormatConstraint sẽ được gọi.
+    Nếu tham số :date khớp với định dạng YYYY-MM-DD, tuyến đường get 'since/:date' => :since sẽ được xử lý bởi hành động since.
+    Nếu không, Rails sẽ trả về trạng thái 404, ngăn chặn việc xử lý các yêu cầu không hợp lệ.
+    Như vậy, đoạn mã trên giúp đảm bảo rằng chỉ các yêu cầu có tham số ngày hợp lệ mới được xử lý bởi các tuyến đường được bảo vệ bởi lớp ràng buộc này
+
+
+------------------------
+
+
+**Scope**:
+   - `scope` trong Rails cho phép nhóm các tuyến đường (routes) với các tùy chọn giống nhau. Nó thường được sử dụng để áp dụng một tiền tố chung cho các tuyến đường hoặc để áp dụng các tùy chọn mặc định cho một nhóm tuyến đường.
+   - Ví dụ:
+     ```ruby
+     scope '/admin' do
+       resources :users
+     end
+     ```
+     Các tuyến đường được tạo sẽ có tiền tố `/admin`, như `/admin/users`.
+
+**Namespace**:
+   - `namespace` tạo ra một phạm vi định tuyến có tên và cũng áp dụng các mô-đun điều khiển. Nó thường được sử dụng để nhóm các tuyến đường có liên quan đến nhau và quản lý chúng trong một thư mục con của thư mục điều khiển (controller).
+   - Ví dụ:
+     ```ruby
+     namespace :admin do
+       resources :users
+     end
+     ```
+     Các tuyến đường được tạo sẽ có tiền tố `/admin`, như `/admin/users`, và các điều khiển tương ứng sẽ được tìm trong `Admin::UsersController`.
+
+**Path**:
+   - `path` trong Rails là phần của URL mà Rails sẽ khớp với tuyến đường đã định nghĩa. Bạn có thể sử dụng tùy chọn `path` để tùy chỉnh phần đường dẫn của tuyến đường.
+   - Ví dụ:
+     ```ruby
+     resources :users, path: 'members'
+     ```
+     Các tuyến đường được tạo sẽ sử dụng `members` thay vì `users`, như `/members`.
+
+**Resources**:
+   - `resources` là một phương thức trong Rails để tạo ra một nhóm tuyến đường chuẩn cho một tài nguyên RESTful. Nó tạo ra các tuyến đường cho các hành động CRUD (Create, Read, Update, Delete) chuẩn.
+   - Ví dụ:
+     ```ruby
+     resources :users
+     ```
+     Điều này sẽ tạo ra các tuyến đường như `/users`, `/users/new`, `/users/:id`, `/users/:id/edit`, v.v.
+
+**Resource**:
+   - `resource` tương tự như `resources`, nhưng nó tạo ra các tuyến đường cho một tài nguyên duy nhất. Điều này thường được sử dụng khi chỉ có một đối tượng của một loại tài nguyên cụ thể (ví dụ: một trang thông tin người dùng).
+   - Ví dụ:
+     ```ruby
+     resource :profile
+     ```
+     Điều này sẽ tạo ra các tuyến đường như `/profile`, `/profile/new`, `/profile/edit`, v.v., nhưng không có các tuyến đường yêu cầu một `id` vì chỉ có một đối tượng.
+
+Các khái niệm này giúp quản lý và tổ chức các tuyến đường trong ứng dụng Rails một cách hiệu quả và logic. Sự khác biệt chính giữa chúng nằm ở cách chúng nhóm, định danh, và quản lý các tuyến đường cũng như các điều khiển liên quan.
