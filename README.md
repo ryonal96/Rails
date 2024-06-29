@@ -390,3 +390,72 @@ end
      Điều này sẽ tạo ra các tuyến đường như `/profile`, `/profile/new`, `/profile/edit`, v.v., nhưng không có các tuyến đường yêu cầu một `id` vì chỉ có một đối tượng.
 
 Các khái niệm này giúp quản lý và tổ chức các tuyến đường trong ứng dụng Rails một cách hiệu quả và logic. Sự khác biệt chính giữa chúng nằm ở cách chúng nhóm, định danh, và quản lý các tuyến đường cũng như các điều khiển liên quan.
+REST, Resources, and Rails
+
+    *REST (Representational State Transfer) là một tập hợp các nguyên tắc kiến trúc xác định cách sử dụng các tiêu chuẩn web, đặc biệt là HTTP, để tạo ra các dịch vụ web đơn giản và dễ mở rộng
+        Kiến trúc Client-Server:
+            Phân tách các chức năng bằng cách chia hệ thống thành các client và server. Client xử lý giao diện người dùng và trạng thái người dùng, trong khi server quản lý dữ liệu và logic của ứng dụng.
+
+        Giao tiếp Không Trạng Thái (Stateless Communication):
+            Mỗi yêu cầu từ client đến server phải chứa tất cả thông tin cần thiết để hiểu và xử lý yêu cầu. Server không lưu trữ bất kỳ trạng thái nào về phiên làm việc của client giữa các yêu cầu. Điều này giúp hệ thống RESTful dễ dàng mở rộng.
+        
+        Khả năng Cache (Cacheability):
+            Các phản hồi phải tự định nghĩa là có thể cache được hay không để ngăn client tái sử dụng dữ liệu cũ hoặc không phù hợp trong các yêu cầu tiếp theo.
+
+        Giao diện Đồng Nhất (Uniform Interface):
+            Một cách giao tiếp tiêu chuẩn giữa client và server. Điều này đơn giản hóa và tách biệt kiến trúc, cho phép mỗi phần phát triển độc lập
+    *Lợi Ích Của REST Trong Phát Triển Web
+        Khả Năng Mở Rộng (Scalability):
+            Nhờ giao tiếp không trạng thái và khả năng cache, các hệ thống RESTful có thể dễ dàng mở rộng theo chiều ngang, hỗ trợ nhiều client hơn chỉ bằng cách thêm nhiều server.
+
+        Linh Hoạt Và Tính Mô Đun (Flexibility and Modularity):
+            Giao diện đồng nhất cho phép các client khác nhau (web, mobile, thiết bị IoT) tương tác với cùng một dịch vụ RESTful theo cách tiêu chuẩn.
+        
+        Nhận Diện Ổn Định (Long-Lived Identifiers):
+            Các URI ổn định đảm bảo rằng các tài nguyên có thể được tham chiếu một cách nhất quán theo thời gian, tạo điều kiện cho các tương tác client-server tin cậy.
+*Controller Trong Rails Và REST
+    Trong Rails, controller đóng vai trò trung tâm trong việc triển khai các route RESTful. Tuân theo các nguyên tắc REST thường dẫn đến việc tạo ra nhiều controller hơn, mỗi controller dành riêng cho một tài nguyên cụ thể hoặc một nhóm hành động liên quan. Cách tiếp cận này tránh được việc controller quá tải, vốn có thể trở nên khó quản lý và mở rộng.
+
+*Routing Resourceful:
+    Rails cung cấp một DSL (Domain-Specific Language) để khai báo các route resourceful, ánh xạ các động từ HTTP (GET, POST, PATCH, DELETE) đến các hành động controller theo cách tiêu chuẩn.
+
+REST in Rails
+    Rails đã tiếp nhận các nguyên tắc RESTful để giúp các nhà phát triển cấu trúc ứng dụng của họ. Bằng cách tuân theo REST, các ứng dụng Rails đạt được một thiết kế có tổ chức và dự đoán được, làm cho ứng dụng dễ điều hướng và bảo trì hơn
+    
+CRUD trong Rails
+    Mọi thứ bắt đầu với CRUD:
+        Create: Tạo mới tài nguyên.
+        Read: Đọc hoặc truy xuất tài nguyên.
+        Update: Cập nhật tài nguyên.
+        Delete: Xóa tài nguyên.
+    Rails sử dụng các phương thức HTTP tiêu chuẩn để ánh xạ các hành động CRUD vào các yêu cầu HTTP tương ứng:
+        GET: Truy xuất thông tin từ server (đọc tài nguyên).
+        POST: Gửi dữ liệu đến server để tạo mới tài nguyên.
+        PUT/PATCH: Cập nhật tài nguyên hiện có.
+        DELETE: Xóa tài nguyên.
+
+    resources :users
+
+        Chỉ cần dòng này trong routes.rb là tương đương với việc định nghĩa bốn named routes
+
+        Index: Hiển thị danh sách các người dùng
+        GET /users → users#index
+
+        Show: Hiển thị chi tiết một người dùng cụ thể
+        GET /users/:id → users#show
+
+        New: Hiển thị form để tạo mới một người dùng
+        GET /users/new → users#new
+
+        Create: Tạo mới một người dùng
+        POST /users → users#create
+
+        Edit: Hiển thị form để chỉnh sửa một người dùng cụ thể
+        GET /users/:id/edit → users#edit
+
+        Update: Cập nhật một người dùng cụ thể
+        PATCH /users/:id → users#update
+        PUT /users/:id → users#update
+        
+        Destroy: Xóa một người dùng cụ thể
+        DELETE /users/:id → users#destroy
